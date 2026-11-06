@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>GI</title>
+<meta name="description" content="GI Engineering Constructions — تسجيل الحركات والموقف والتقارير">
+<meta name="theme-color" content="#262626">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="GI">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+:root{--org:#FAA32F;--char:#333333;--char2:#262626;--fa:'IBM Plex Sans Arabic',Tahoma,'Segoe UI',system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--char2);color:#fff;font-family:var(--fa);overscroll-behavior:none}
+#box{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px)}
+#app{display:block;width:100%;height:100%;border:0;background:var(--char2)}
+.cover{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;background:var(--char2);transition:opacity .35s ease}
+.cover.off{opacity:0;pointer-events:none}
+.cover[hidden]{display:none}
+.mark{width:96px;height:96px;display:block}
+.word{font:600 11px/1.4 Arial,sans-serif;letter-spacing:.24em;color:rgba(255,255,255,.75);text-align:center;direction:ltr}
+.bars{display:flex;gap:4px;height:22px;align-items:center}
+.bars i{width:6px;height:22px;background:var(--org);animation:p 1s infinite ease-in-out}
+.bars i:nth-child(2){animation-delay:.12s}.bars i:nth-child(3){animation-delay:.24s}
+@keyframes p{0%,100%{opacity:.25}50%{opacity:1}}
+.card{width:100%;max-width:420px;text-align:right}
+.mini{display:block;width:44px;height:44px;margin-bottom:18px}
+.card h1{margin:0 0 6px;font-size:22px;line-height:1.35}
+.card p{margin:0 0 16px;font-size:14.5px;line-height:1.75;color:rgba(255,255,255,.75)}
+.card input{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.25);border-radius:0;background:rgba(255,255,255,.07);color:#fff;font:15px var(--fa);padding:10px 12px;direction:ltr;text-align:left}
+.card button{width:100%;min-height:54px;margin-top:12px;border:0;border-radius:0;background:var(--org);color:var(--char);font:700 17px var(--fa);cursor:pointer}
+.card .err{min-height:22px;margin-top:8px;font-size:13.5px;color:#FFB4A6}
+.card .ghost{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:600}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="box"><iframe id="app" title="GI" allow="clipboard-read; clipboard-write"></iframe></div>
+
+<div class="cover" id="splash" aria-live="polite">
+  <svg class="mark" viewBox="0 0 1758 1758" aria-label="GI"><g id="gi"><rect width="1758" height="1758" fill="#FAA32F"/><g fill="#333333"><path d="M220 220H1539V466H466V1292H835V923H654V742H1081V1538H220Z"/><rect x="1292" y="741" width="247" height="797"/><rect x="1292" y="480" width="247" height="19"/><rect x="1292" y="518" width="247" height="19"/><rect x="1292" y="556" width="247" height="19"/><rect x="1292" y="595" width="247" height="19"/><rect x="1292" y="633" width="247" height="19"/><rect x="1292" y="671" width="247" height="19"/><rect x="1292" y="709" width="247" height="19"/></g></g></svg>
+  <div class="word">ENGINEERING<br>CONSTRUCTIONS</div>
+  <div class="bars" id="bars"><i></i><i></i><i></i></div>
+</div>
+
+<div class="cover" id="setup" hidden>
+  <form class="card" id="form" autocomplete="off" novalidate>
+    <svg class="mini" viewBox="0 0 1758 1758" aria-hidden="true"><use href="#gi"/></svg>
+    <h1>ربط التطبيق</h1>
+    <p>الصق رابط التطبيق مرة واحدة بس. هتلاقيه في شيت «GI_صندوق_الإدخال»، تاب «الإعدادات»، في خانة «رابط التطبيق للموبايل» (أو الرابط اللي بتفتح بيه التطبيق دلوقتي).</p>
+    <input id="link" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec?k=…" aria-label="رابط التطبيق">
+    <div class="err" id="err" role="alert"></div>
+    <button type="submit">افتح التطبيق</button>
+  </form>
+</div>
+
+<div class="cover" id="offline" hidden>
+  <div class="card">
+    <svg class="mini" viewBox="0 0 1758 1758" aria-hidden="true"><use href="#gi"/></svg>
+    <h1>مفيش إنترنت</h1>
+    <p>التطبيق بيقرا ويسجّل على Google مباشرة، فلازم يبقى فيه نت. أول ما النت يرجع هيفتح لوحده.</p>
+    <button type="button" class="ghost" onclick="boot(true)">جرّب تاني</button>
+  </div>
+</div>
+
+<script>
+/* غلاف تطبيق GI: بيفتح نفس التطبيق اللي على Google Apps Script، ملء الشاشة وبأيقونة الشركة.
+   مفيش أي بيانات أو روابط سرية في الملف ده: الرابط بيتحفظ على الموبايل بس. */
+var KEY = 'gi_app_link';
+var RX = /https:\/\/script\.google\.com\/(?:a\/[^\/\s]+\/)?macros\/s\/[A-Za-z0-9_-]+\/exec\?(?:[^\s#"']*&)?k=[A-Za-z0-9]+[^\s#"']*/;
+var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+var $ = function (id) { return document.getElementById(id); };
+var loaded = false;
+
+// أندرويد/كروم: ملف التثبيت (على الآيفون مش بنحطه عشان «إضافة للشاشة الرئيسية» تحتفظ بالرابط)
+if (!IOS) { var m = document.createElement('link'); m.rel = 'manifest'; m.href = 'manifest.webmanifest'; document.head.appendChild(m); }
+
+function pick(text) { var x = RX.exec(String(text || '')); return x ? x[0] : ''; }
+function stored() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+function store(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+function hashLink() { var h = location.hash.slice(1); try { h = decodeURIComponent(h); } catch (e) {} return pick(h); }
+function show(id) { ['setup', 'offline'].forEach(function (x) { $(x).hidden = x !== id; }); }
+function hideSplash() { $('splash').classList.add('off'); setTimeout(function () { $('splash').hidden = true; }, 400); }
+
+function link() {
+  if (location.hash === '#reset') { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, '', location.pathname); return ''; }
+  var h = hashLink();
+  if (h) { store(h); return h; }
+  return stored();
+}
+
+var offline = false;
+/** فيه نت فعلًا؟ (الموبايل ممكن يبقى متوصل واي فاي من غير إنترنت) */
+function probe() {
+  var c = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (c) c.abort(); }, 7000);
+  return fetch('https://www.gstatic.com/generate_204', {mode: 'no-cors', cache: 'no-store', signal: c ? c.signal : undefined})
+    .then(function () { clearTimeout(t); return true; }, function () { clearTimeout(t); return false; });
+}
+
+function boot(force) {
+  var url = link();
+  if (!url) { hideSplash(); show('setup'); setTimeout(function () { $('link').focus(); }, 300); return; }
+  if (navigator.onLine === false) { offline = true; hideSplash(); show('offline'); return; }
+  show('');
+  if (!loaded || force) {
+    $('splash').hidden = false; $('splash').classList.remove('off');
+    var f = $('app');
+    f.onload = function () { loaded = true; setTimeout(hideSplash, 700); };
+    if (force) f.src = 'about:blank';
+    setTimeout(function () { f.src = url; }, force ? 50 : 0);
+    setTimeout(hideSplash, 9000);
+  }
+  probe().then(function (ok) { if (!ok) { offline = true; hideSplash(); show('offline'); } else offline = false; });
+}
+
+$('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var v = pick($('link').value);
+  if (!v) { $('err').textContent = 'ده مش رابط التطبيق. لازم يبدأ بـ https://script.google.com/macros/s/ وفي آخره ?k=…'; return; }
+  store(v);
+  if (IOS) history.replaceState(null, '', location.pathname + '#' + encodeURIComponent(v));   // عشان «إضافة للشاشة الرئيسية» تاخده معاها
+  boot();
+});
+window.addEventListener('online', function () { if (offline || !loaded) boot(true); });
+window.addEventListener('hashchange', function () { if (location.hash === '#reset' || hashLink()) location.reload(); });
+if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+boot();
+</script>
+</body>
+</html>
